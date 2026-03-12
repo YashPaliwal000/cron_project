@@ -11,3 +11,19 @@ spring:
 
   quartz:
     job-store-type: memory
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui/
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    root: INFO
+    com.scheduler: DEBUG
+    org.springframework.web: INFO
+    org.quartz: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

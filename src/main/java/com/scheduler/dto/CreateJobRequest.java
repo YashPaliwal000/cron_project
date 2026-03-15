@@ -20,6 +20,13 @@ public class CreateJobRequest {
 
     private String payload;
 
-    @NotNull
     private String scheduleTime;
+
+    private String scheduleType; // ONE_TIME, RECURRING
+
+    private String cronExpression;
+
+    private String timeZone;
+
+    private ScheduleConfig scheduleConfig;
 }

@@ -17,6 +17,9 @@ public class JobDetailsResponse {
     private String method;
     private String status;
     private Instant scheduleTime;
+    private String scheduleType;
+    private String cronExpression;
+    private String timeZone;
     private Map<String, String> headers;
     private Map<String, Object> payload;
     private Instant createdAt;

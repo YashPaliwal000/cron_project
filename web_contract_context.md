@@ -48,13 +48,22 @@ Authorization: Bearer <token>
 ```json
 [
   {
-    "id": "1",
+    "id": "uuid-1",
     "name": "Daily Report",
     "endpoint": "https://api.example.com/report",
     "method": "POST",
-    "status": "ACTIVE",      // "ACTIVE" | "PAUSED"
-    "nextRun": "2026-03-15T10:00:00",
-    "lastStatus": "SUCCESS"  // "SUCCESS" | "FAILED" (used in Dashboard metrics)
+    "status": "ACTIVE",
+    "nextRun": "2026-03-16T09:00:00",
+    "lastStatus": "SUCCESS"
+  },
+  {
+    "id": "uuid-2",
+    "name": "Weekly Backup",
+    "endpoint": "https://api.example.com/backup",
+    "method": "GET",
+    "status": "ACTIVE",
+    "nextRun": "2026-03-17T10:00:00",
+    "lastStatus": "FAILED"
   }
 ]
 ```
@@ -71,7 +80,10 @@ Authorization: Bearer <token>
   "endpoint": "https://api.example.com/reports/daily",
   "method": "POST",                  // "GET", "POST", "PUT", "DELETE", "PATCH"
   "status": "ACTIVE",
+  "scheduleType": "RECURRING",
   "scheduleTime": "2026-03-15T10:00:00",
+  "cronExpression": "0 0 9 * * ?",
+  "timeZone": "Asia/Kolkata",
   "headers": "{\"Content-Type\": \"application/json\"}", // Stringified JSON or parsed Object
   "payload": "{\"reportType\": \"summary\"}",            // Stringified JSON or parsed Object
   "createdAt": "2026-03-01T08:00:00",
@@ -92,16 +104,119 @@ Authorization: Bearer <token>
   "method": "POST",
   "headers": "{\"Authorization\": \"Bearer token\"}",
   "payload": "{\"userId\": 123}",
-  "scheduleTime": "2026-03-15T09:00:00"
+  "scheduleType": "RECURRING",  // "ONE_TIME" | "RECURRING"
+  "scheduleTime": "2026-03-15T09:00:00",  // Required for ONE_TIME, optional start time for RECURRING
+  "cronExpression": null,  // Optional; if not provided, generated from scheduleConfig
+  "timeZone": "Asia/Kolkata",  // Optional, defaults to system timezone
+  "scheduleConfig": {  // Optional; used to generate cronExpression if not provided
+    "frequency": "DAILY",  // "DAILY", "WEEKLY", "MONTHLY", "CUSTOM"
+    "times": ["09:00", "13:00"],  // HH:MM format, required for DAILY/WEEKLY/MONTHLY
+    "daysOfWeek": null,  // ["MON", "TUE", ...] for WEEKLY
+    "daysOfMonth": null,  // [1, 15] for MONTHLY
+    "interval": null  // e.g., 2 for every 2 hours (for HOURLY, but can extend)
+  }
 }
 ```
-**Response**: `201 Created` (Optionally return the created Job object).
+**Response Body (JSON):** (Optional, if returning the created job)
+```json
+{
+  "id": "uuid-new-job",
+  "name": "Trigger Email",
+  "endpoint": "https://service/email",
+  "method": "POST",
+  "status": "ACTIVE",
+  "scheduleType": "RECURRING",
+  "scheduleTime": "2026-03-15T09:00:00",
+  "cronExpression": "0 0 9,13 * * ?",
+  "timeZone": "Asia/Kolkata",
+  "headers": "{\"Authorization\": \"Bearer token\"}",
+  "payload": "{\"userId\": 123}",
+  "createdAt": "2026-03-15T12:00:00",
+  "lastRunTime": null,
+  "lastRunStatus": null
+}
+```
+
+**Example Request (One-Time Job):**
+```json
+{
+  "name": "One-Time Backup",
+  "endpoint": "https://api.example.com/backup",
+  "method": "POST",
+  "headers": "{\"Authorization\": \"Bearer token\"}",
+  "payload": "{}",
+  "scheduleType": "ONE_TIME",
+  "scheduleTime": "2026-03-20T14:30:00",
+  "timeZone": "America/New_York"
+}
+```
+
+**Example Request (Recurring with Cron):**
+```json
+{
+  "name": "Hourly Health Check",
+  "endpoint": "https://api.example.com/health",
+  "method": "GET",
+  "headers": null,
+  "payload": null,
+  "scheduleType": "RECURRING",
+  "cronExpression": "0 0 * * * ?",
+  "timeZone": "UTC"
+}
+```
+
+**Notes on Scheduling:**
+- **Backend implementation note (current MVP)**:
+  - For `"ONE_TIME"` jobs, `scheduleTime` is **required** and is the exact execution datetime.
+  - For `"RECURRING"` jobs, `scheduleTime` is **optional**; if omitted, the backend uses `cronExpression` or generates one from `scheduleConfig` (including multiple times per day).
+- **ONE_TIME**: Executes once at the specified `scheduleTime` (local time in the given `timeZone` or system default).
+- **RECURRING**: If `cronExpression` is provided, uses it directly. Otherwise, generates from `scheduleConfig` (supports multiple times like `["09:00","13:00","19:00"]`).
+- `scheduleConfig` allows UI to send user-friendly selections; backend converts to `cronExpression`.
+- Examples:
+  - Daily at 9 AM and 1 PM: `{"frequency": "DAILY", "times": ["09:00", "13:00"]}` → `"0 0 9,13 * * ?"`
+  - Weekly on Mon/Wed at 10 AM: `{"frequency": "WEEKLY", "daysOfWeek": ["MON", "WED"], "times": ["10:00"]}` → `"0 0 10 ? * MON,WED"`
+  - Custom: Provide `cronExpression` directly, e.g., `"0 0 9 * * ?"`
+- If both `cronExpression` and `scheduleConfig` are provided, `cronExpression` takes precedence.
 
 ### **2.4. Update existing Job**
 - **Endpoint**: `PUT /jobs/{id}`
 - **Purpose**: Update configuration of an existing job.
 
-**Request Body (JSON):** Same fields as Create Job.
+**Request Body (JSON):** Same fields as Create Job. Only provide fields to update; others remain unchanged.
+
+**Example Request (Update to Weekly Schedule):**
+```json
+{
+  "name": "Updated Weekly Report",
+  "scheduleType": "RECURRING",
+  "scheduleConfig": {
+    "frequency": "WEEKLY",
+    "daysOfWeek": ["MON", "FRI"],
+    "times": ["08:00"]
+  },
+  "timeZone": "UTC"
+}
+```
+
+**Response Body (JSON):** (Optional, if returning the updated job)
+```json
+{
+  "id": "uuid-job-id",
+  "name": "Updated Weekly Report",
+  "endpoint": "https://service/email",
+  "method": "POST",
+  "status": "ACTIVE",
+  "scheduleType": "RECURRING",
+  "scheduleTime": "2026-03-15T09:00:00",
+  "cronExpression": "0 0 8 ? * MON,FRI",
+  "timeZone": "UTC",
+  "headers": "{\"Authorization\": \"Bearer token\"}",
+  "payload": "{\"userId\": 123}",
+  "createdAt": "2026-03-15T12:00:00",
+  "lastRunTime": "2026-03-14T10:00:00",
+  "lastRunStatus": "SUCCESS"
+}
+```
 
 ### **2.5. Delete Job**
 - **Endpoint**: `DELETE /jobs/{id}`

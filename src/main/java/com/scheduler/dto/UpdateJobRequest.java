@@ -18,4 +18,12 @@ public class UpdateJobRequest {
     private String scheduleTime;
 
     private String status; // ACTIVE / PAUSED
+
+    private String scheduleType; // ONE_TIME, RECURRING
+
+    private String cronExpression;
+
+    private String timeZone;
+
+    private ScheduleConfig scheduleConfig;
 }

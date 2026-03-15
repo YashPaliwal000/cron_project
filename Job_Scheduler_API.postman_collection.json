@@ -107,7 +107,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Job - 5 Minutes\",\n  \"endpoint\": \"https://jsonplaceholder.typicode.com/posts/1\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Accept\": \"application/json\"\n  },\n  \"payload\": \"{\\\"key\\\": \\\"value\\\"}\",\n  \"scheduleTime\": \"2026-03-12T18:14:27Z\"\n}"
+              "raw": "{\n  \"name\": \"Test Job - 5 Minutes\",\n  \"endpoint\": \"https://jsonplaceholder.typicode.com/posts/1\",\n  \"method\": \"GET\",\n  \"headers\": \"{\\\"Accept\\\": \\\"application/json\\\"}\",\n  \"payload\": \"{\\\"key\\\": \\\"value\\\"}\",\n  \"scheduleType\": \"ONE_TIME\",\n  \"scheduleTime\": \"2026-03-15T18:14:27\",\n  \"timeZone\": \"Asia/Kolkata\"\n}"
             },
             "url": {
               "raw": "http://localhost:8080/api/jobs",
@@ -175,7 +175,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Job Name\",\n  \"endpoint\": \"https://jsonplaceholder.typicode.com/posts/2\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Authorization\": \"Bearer updated_token\"\n  },\n  \"payload\": \"{\\\"updated\\\": true}\",\n  \"scheduleTime\": \"2026-03-16T10:30:00Z\",\n  \"status\": \"ACTIVE\"\n}"
+              "raw": "{\n  \"name\": \"Updated Job Name\",\n  \"endpoint\": \"https://jsonplaceholder.typicode.com/posts/2\",\n  \"method\": \"GET\",\n  \"headers\": \"{\\\"Authorization\\\": \\\"Bearer updated_token\\\"}\",\n  \"payload\": \"{\\\"updated\\\": true}\",\n  \"scheduleTime\": \"2026-03-16T10:30:00\",\n  \"status\": \"ACTIVE\",\n  \"scheduleType\": \"ONE_TIME\",\n  \"timeZone\": \"Asia/Kolkata\"\n}"
             },
             "url": {
               "raw": "http://localhost:8080/api/jobs/{{jobId}}",
@@ -266,6 +266,49 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Create Recurring Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"recurringJobId\", jsonData.id);",
+                  "    pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "    pm.test(\"Response has job ID\", function () { pm.expect(jsonData.id).to.exist; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Daily Report Job\",\n  \"endpoint\": \"https://api.example.com/report\",\n  \"method\": \"POST\",\n  \"headers\": \"{\\\"Content-Type\\\": \\\"application/json\\\"}\",\n  \"payload\": \"{\\\"reportType\\\": \\\"daily\\\"}\",\n  \"scheduleType\": \"RECURRING\",\n  \"scheduleConfig\": {\n    \"frequency\": \"DAILY\",\n    \"times\": [\"09:00\", \"15:00\"]\n  },\n  \"timeZone\": \"Asia/Kolkata\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/jobs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "jobs"]
+            }
+          },
+          "response": []
         }
       ]
     }
@@ -283,6 +326,11 @@
     },
     {
       "key": "jobId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recurringJobId",
       "value": "",
       "type": "string"
     }

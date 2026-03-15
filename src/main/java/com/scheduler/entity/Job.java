@@ -37,6 +37,12 @@ public class Job {
     @Column(name = "schedule_time")
     private Instant scheduleTime;
 
+    private String scheduleType; // ONE_TIME, RECURRING
+
+    private String cronExpression;
+
+    private String timeZone;
+
     private String status; // ACTIVE, PAUSED
 
     @Column(name = "created_at")

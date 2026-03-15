@@ -8,11 +8,13 @@ import java.util.UUID;
 
 @Data
 @Builder
-public class JobExecutionResponse {
+public class JobSummaryResponse {
 
     private UUID id;
-    private Instant executedAt;
-    private Integer durationMs;
-    private Integer responseCode;
+    private String name;
+    private String endpoint;
+    private String method;
     private String status;
+    private Instant nextRun;
+    private String lastStatus;
 }

@@ -42,4 +42,9 @@ public class Job {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "last_run_time")
+    private Instant lastRunTime;
+
+    @Column(name = "last_run_status")
+    private String lastRunStatus;
 }

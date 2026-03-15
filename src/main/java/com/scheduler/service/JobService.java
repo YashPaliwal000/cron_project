@@ -3,8 +3,9 @@ package com.scheduler.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scheduler.dto.CreateJobRequest;
+import com.scheduler.dto.JobDetailsResponse;
 import com.scheduler.dto.JobExecutionResponse;
-import com.scheduler.dto.JobResponse;
+import com.scheduler.dto.JobSummaryResponse;
 import com.scheduler.dto.UpdateJobRequest;
 import com.scheduler.entity.Job;
 import com.scheduler.entity.JobExecution;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,7 +30,7 @@ public class JobService {
     private final SchedulerService schedulerService;
     private final ObjectMapper objectMapper;
 
-    public JobResponse createJob(CreateJobRequest request) throws SchedulerException, JsonProcessingException {
+    public JobDetailsResponse createJob(CreateJobRequest request) throws SchedulerException, JsonProcessingException {
         Job job = Job.builder()
                 .name(request.getName())
                 .apiEndpoint(request.getApiEndpoint())
@@ -43,10 +45,10 @@ public class JobService {
         job = jobRepository.save(job);
         schedulerService.scheduleJob(job.getId(), job.getScheduleTime());
 
-        return toResponse(job);
+        return toDetailsResponse(job);
     }
 
-    public JobResponse updateJob(UUID id, UpdateJobRequest request) throws SchedulerException, JsonProcessingException {
+    public JobDetailsResponse updateJob(UUID id, UpdateJobRequest request) throws SchedulerException, JsonProcessingException {
         Job job = jobRepository.findById(id).orElseThrow(() -> new RuntimeException("Job not found"));
 
         if (request.getName() != null) job.setName(request.getName());
@@ -65,12 +67,31 @@ public class JobService {
             schedulerService.scheduleJob(job.getId(), job.getScheduleTime());
         }
 
-        return toResponse(job);
+        return toDetailsResponse(job);
     }
 
-    public void deleteJob(UUID id) throws SchedulerException {
-        schedulerService.deleteJob(id);
-        jobRepository.deleteById(id);
+    public JobDetailsResponse getJobDetails(UUID id) {
+        Job job = jobRepository.findById(id).orElseThrow(() -> new RuntimeException("Job not found"));
+        return toDetailsResponse(job);
+    }
+
+    public List<JobExecutionResponse> getJobHistory(UUID jobId) {
+        List<JobExecution> executions = jobExecutionRepository.findByJobId(jobId);
+        return executions.stream()
+                .map(exec -> JobExecutionResponse.builder()
+                        .id(exec.getId())
+                        .executedAt(exec.getStartTime())
+                        .durationMs(exec.getDurationMs())
+                        .responseCode(exec.getResponseCode())
+                        .status(exec.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public List<JobSummaryResponse> getAllJobs() {
+        return jobRepository.findAll().stream()
+                .map(this::toSummaryResponse)
+                .collect(Collectors.toList());
     }
 
     public void pauseJob(UUID id) throws SchedulerException {
@@ -89,31 +110,40 @@ public class JobService {
         });
     }
 
-    public List<JobResponse> getAllJobs() {
-        return jobRepository.findAll().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public void deleteJob(UUID id) throws SchedulerException {
+        schedulerService.deleteJob(id);
+        jobRepository.deleteById(id);
     }
 
-    public List<JobExecutionResponse> getJobExecutions(UUID jobId) {
-        List<JobExecution> executions = jobExecutionRepository.findByJobId(jobId);
-        return executions.stream()
-                .map(exec -> JobExecutionResponse.builder()
-                        .startTime(exec.getStartTime())
-                        .endTime(exec.getEndTime())
-                        .status(exec.getStatus())
-                        .durationMs(exec.getDurationMs())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    private JobResponse toResponse(Job job) {
-        return JobResponse.builder()
+    private JobSummaryResponse toSummaryResponse(Job job) {
+        return JobSummaryResponse.builder()
                 .id(job.getId())
                 .name(job.getName())
+                .endpoint(job.getApiEndpoint())
+                .method(job.getMethod())
                 .status(job.getStatus())
-                .scheduleTime(job.getScheduleTime())
-                .apiEndpoint(job.getApiEndpoint())
+                .nextRun(job.getScheduleTime()) // assuming scheduleTime is nextRun
+                .lastStatus(job.getLastRunStatus())
                 .build();
+    }
+
+    private JobDetailsResponse toDetailsResponse(Job job) {
+        try {
+            return JobDetailsResponse.builder()
+                    .id(job.getId())
+                    .name(job.getName())
+                    .endpoint(job.getApiEndpoint())
+                    .method(job.getMethod())
+                    .status(job.getStatus())
+                    .scheduleTime(job.getScheduleTime())
+                    .headers(job.getHeaders() != null ? objectMapper.readValue(job.getHeaders(), Map.class) : null)
+                    .payload(job.getPayload() != null ? objectMapper.readValue(job.getPayload(), Map.class) : null)
+                    .createdAt(job.getCreatedAt())
+                    .lastRunTime(job.getLastRunTime())
+                    .lastRunStatus(job.getLastRunStatus())
+                    .build();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error parsing JSON", e);
+        }
     }
 }

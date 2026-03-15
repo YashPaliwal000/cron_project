@@ -123,6 +123,11 @@ public class ApiJobExecutor implements org.quartz.Job {
         JobExecution execution = builder.build();
         jobExecutionRepository.save(execution);
         
+        // Update job's last run info
+        job.setLastRunTime(start);
+        job.setLastRunStatus(execution.getStatus());
+        jobRepository.save(job);
+        
         log.info("✓ Job execution record saved");
         log.info("Execution Status: {}", execution.getStatus());
         log.info("========== JOB EXECUTION COMPLETED ==========");

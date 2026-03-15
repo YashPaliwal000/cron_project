@@ -1,10 +1,78 @@
 {
   "info": {
     "name": "Job Scheduler API",
-    "description": "API for managing and scheduling jobs with Quartz",
+    "description": "API for managing and scheduling jobs with Quartz and JWT authentication",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"authToken\", jsonData.token);",
+                  "    pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "    pm.test(\"Response has token\", function () { pm.expect(jsonData.token).to.exist; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Jobs",
       "item": [
@@ -31,6 +99,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
               }
             ],
             "body": {
@@ -51,7 +123,12 @@
           "name": "Get All Jobs",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
               "raw": "http://localhost:8080/api/jobs",
               "protocol": "http",
@@ -63,16 +140,21 @@
           "response": []
         },
         {
-          "name": "Get Job by ID",
+          "name": "Get Job Details",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
-              "raw": "http://localhost:8080/api/jobs/{{jobId}}/executions",
+              "raw": "http://localhost:8080/api/jobs/{{jobId}}",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8080",
-              "path": ["api", "jobs", "{{jobId}}", "executions"]
+              "path": ["api", "jobs", "{{jobId}}"]
             }
           },
           "response": []
@@ -85,6 +167,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
               }
             ],
             "body": {
@@ -104,8 +190,13 @@
         {
           "name": "Pause Job",
           "request": {
-            "method": "PUT",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
               "raw": "http://localhost:8080/api/jobs/{{jobId}}/pause",
               "protocol": "http",
@@ -119,8 +210,13 @@
         {
           "name": "Resume Job",
           "request": {
-            "method": "PUT",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
               "raw": "http://localhost:8080/api/jobs/{{jobId}}/resume",
               "protocol": "http",
@@ -132,16 +228,21 @@
           "response": []
         },
         {
-          "name": "Get Job Executions",
+          "name": "Get Job History",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
-              "raw": "http://localhost:8080/api/jobs/{{jobId}}/executions",
+              "raw": "http://localhost:8080/api/jobs/{{jobId}}/history",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8080",
-              "path": ["api", "jobs", "{{jobId}}", "executions"]
+              "path": ["api", "jobs", "{{jobId}}", "history"]
             }
           },
           "response": []
@@ -150,7 +251,12 @@
           "name": "Delete Job",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
               "raw": "http://localhost:8080/api/jobs/{{jobId}}",
               "protocol": "http",
@@ -171,10 +277,14 @@
       "type": "string"
     },
     {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "jobId",
       "value": "",
       "type": "string"
     }
   ]
 }
-

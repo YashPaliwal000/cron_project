@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("message", ex.getMessage());
+        body.put("code", "NOT_FOUND");
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
@@ -24,6 +25,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleScheduler(SchedulerException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("message", "Scheduler error");
+        body.put("code", "SCHEDULER_ERROR");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
@@ -31,6 +33,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("message", "Validation failed");
+        body.put("code", "VALIDATION_ERROR");
         return ResponseEntity.badRequest().body(body);
     }
 }

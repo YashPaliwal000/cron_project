@@ -54,7 +54,7 @@ public class ApiJobExecutor implements org.quartz.Job {
 
         Job job = jobOpt.get();
         log.info("Job Name: {}", job.getName());
-        log.info("API Endpoint: {}", job.getApiEndpoint());
+        log.info("API Endpoint: {}", job.getEndpoint());
         log.info("HTTP Method: {}", job.getMethod());
         
         Instant start = Instant.now();
@@ -66,7 +66,7 @@ public class ApiJobExecutor implements org.quartz.Job {
 
         try {
             HttpHeaders headers = new HttpHeaders();
-            if (job.getHeaders() != null) {
+            if (job.getHeaders() != null && !job.getHeaders().isEmpty()) {
                 Map<String, String> headerMap = objectMapper.readValue(job.getHeaders(), Map.class);
                 log.debug("Request headers: {}", headerMap.keySet());
                 headerMap.forEach(headers::add);
@@ -75,7 +75,7 @@ public class ApiJobExecutor implements org.quartz.Job {
             }
 
             Object body = null;
-            if (job.getPayload() != null) {
+            if (job.getPayload() != null && !job.getPayload().isEmpty()) {
                 body = objectMapper.readValue(job.getPayload(), Map.class);
                 log.debug("Request payload: {}", job.getPayload());
             } else {
@@ -85,8 +85,8 @@ public class ApiJobExecutor implements org.quartz.Job {
             HttpMethod method = HttpMethod.valueOf(job.getMethod().toUpperCase());
             HttpEntity<Object> entity = new HttpEntity<>(body, headers);
 
-            log.info("Calling API endpoint: {} with method: {}", job.getApiEndpoint(), method);
-            ResponseEntity<String> response = restTemplate.exchange(job.getApiEndpoint(), method, entity, String.class);
+            log.info("Calling API endpoint: {} with method: {}", job.getEndpoint(), method);
+            ResponseEntity<String> response = restTemplate.exchange(job.getEndpoint(), method, entity, String.class);
 
             Instant end = Instant.now();
             int durationMs = (int) (end.toEpochMilli() - start.toEpochMilli());

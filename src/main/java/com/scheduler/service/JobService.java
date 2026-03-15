@@ -16,6 +16,8 @@ import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,11 +35,11 @@ public class JobService {
     public JobDetailsResponse createJob(CreateJobRequest request) throws SchedulerException, JsonProcessingException {
         Job job = Job.builder()
                 .name(request.getName())
-                .apiEndpoint(request.getApiEndpoint())
+                .endpoint(request.getEndpoint())
                 .method(request.getMethod())
-                .headers(request.getHeaders() != null ? objectMapper.writeValueAsString(request.getHeaders()) : null)
-                .payload(request.getPayload() != null ? objectMapper.writeValueAsString(request.getPayload()) : null)
-                .scheduleTime(request.getScheduleTime())
+                .headers(request.getHeaders())
+                .payload(request.getPayload())
+                .scheduleTime(parseScheduleTime(request.getScheduleTime()))
                 .status("ACTIVE")
                 .createdAt(Instant.now())
                 .build();
@@ -52,11 +54,11 @@ public class JobService {
         Job job = jobRepository.findById(id).orElseThrow(() -> new RuntimeException("Job not found"));
 
         if (request.getName() != null) job.setName(request.getName());
-        if (request.getApiEndpoint() != null) job.setApiEndpoint(request.getApiEndpoint());
+        if (request.getEndpoint() != null) job.setEndpoint(request.getEndpoint());
         if (request.getMethod() != null) job.setMethod(request.getMethod());
-        if (request.getHeaders() != null) job.setHeaders(objectMapper.writeValueAsString(request.getHeaders()));
-        if (request.getPayload() != null) job.setPayload(objectMapper.writeValueAsString(request.getPayload()));
-        if (request.getScheduleTime() != null) job.setScheduleTime(request.getScheduleTime());
+        if (request.getHeaders() != null) job.setHeaders(request.getHeaders());
+        if (request.getPayload() != null) job.setPayload(request.getPayload());
+        if (request.getScheduleTime() != null) job.setScheduleTime(parseScheduleTime(request.getScheduleTime()));
         if (request.getStatus() != null) job.setStatus(request.getStatus());
 
         job = jobRepository.save(job);
@@ -119,7 +121,7 @@ public class JobService {
         return JobSummaryResponse.builder()
                 .id(job.getId())
                 .name(job.getName())
-                .endpoint(job.getApiEndpoint())
+                .endpoint(job.getEndpoint())
                 .method(job.getMethod())
                 .status(job.getStatus())
                 .nextRun(job.getScheduleTime()) // assuming scheduleTime is nextRun
@@ -132,12 +134,12 @@ public class JobService {
             return JobDetailsResponse.builder()
                     .id(job.getId())
                     .name(job.getName())
-                    .endpoint(job.getApiEndpoint())
+                    .endpoint(job.getEndpoint())
                     .method(job.getMethod())
                     .status(job.getStatus())
                     .scheduleTime(job.getScheduleTime())
-                    .headers(job.getHeaders() != null ? objectMapper.readValue(job.getHeaders(), Map.class) : null)
-                    .payload(job.getPayload() != null ? objectMapper.readValue(job.getPayload(), Map.class) : null)
+                    .headers(job.getHeaders() != null && !job.getHeaders().isEmpty() ? objectMapper.readValue(job.getHeaders(), Map.class) : null)
+                    .payload(job.getPayload() != null && !job.getPayload().isEmpty() ? objectMapper.readValue(job.getPayload(), Map.class) : null)
                     .createdAt(job.getCreatedAt())
                     .lastRunTime(job.getLastRunTime())
                     .lastRunStatus(job.getLastRunStatus())
@@ -145,5 +147,16 @@ public class JobService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error parsing JSON", e);
         }
+    }
+
+    private Instant parseScheduleTime(String scheduleTimeStr) {
+        if (scheduleTimeStr == null || scheduleTimeStr.isEmpty()) {
+            return null;
+        }
+        if (scheduleTimeStr.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}")) {
+            scheduleTimeStr += ":00";
+        }
+        LocalDateTime ldt = LocalDateTime.parse(scheduleTimeStr);
+        return ldt.atZone(ZoneId.systemDefault()).toInstant();
     }
 }

@@ -4,9 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.time.Instant;
-import java.util.Map;
-
 @Data
 public class CreateJobRequest {
 
@@ -14,15 +11,15 @@ public class CreateJobRequest {
     private String name;
 
     @NotBlank
-    private String apiEndpoint;
+    private String endpoint;
 
     @NotBlank
     private String method;
 
-    private Map<String, String> headers;
+    private String headers;
 
-    private Map<String, Object> payload;
+    private String payload;
 
     @NotNull
-    private Instant scheduleTime;
+    private String scheduleTime;
 }

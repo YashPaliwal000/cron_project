@@ -24,7 +24,7 @@ public class Job {
     private String name;
 
     @Column(name = "api_endpoint", columnDefinition = "TEXT")
-    private String apiEndpoint;
+    private String endpoint;
 
     private String method;
 

@@ -107,7 +107,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Job - 5 Minutes\",\n  \"apiEndpoint\": \"https://jsonplaceholder.typicode.com/posts/1\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Accept\": \"application/json\"\n  },\n  \"scheduleTime\": \"2026-03-12T18:14:27Z\"\n}"
+              "raw": "{\n  \"name\": \"Test Job - 5 Minutes\",\n  \"endpoint\": \"https://jsonplaceholder.typicode.com/posts/1\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Accept\": \"application/json\"\n  },\n  \"payload\": \"{\\\"key\\\": \\\"value\\\"}\",\n  \"scheduleTime\": \"2026-03-12T18:14:27Z\"\n}"
             },
             "url": {
               "raw": "http://localhost:8080/api/jobs",
@@ -175,7 +175,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Job Name\",\n  \"apiEndpoint\": \"https://jsonplaceholder.typicode.com/posts/2\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Authorization\": \"Bearer updated_token\"\n  },\n  \"payload\": {\n    \"updated\": true\n  },\n  \"scheduleTime\": \"2026-03-16T10:30:00Z\",\n  \"status\": \"ACTIVE\"\n}"
+              "raw": "{\n  \"name\": \"Updated Job Name\",\n  \"endpoint\": \"https://jsonplaceholder.typicode.com/posts/2\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Authorization\": \"Bearer updated_token\"\n  },\n  \"payload\": \"{\\\"updated\\\": true}\",\n  \"scheduleTime\": \"2026-03-16T10:30:00Z\",\n  \"status\": \"ACTIVE\"\n}"
             },
             "url": {
               "raw": "http://localhost:8080/api/jobs/{{jobId}}",

@@ -1,7 +1,7 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/job_scheduler
-    username: postgres
+    username: adeshsengar
     password: postgres
 
   jpa:
@@ -11,6 +11,16 @@ spring:
 
   quartz:
     job-store-type: memory
+
+server:
+  port: 8080
+
+jakarta:
+  persistence:
+    jdbc:
+      url: ${spring.datasource.url}
+      user: ${spring.datasource.username}
+      password: ${spring.datasource.password}
 
 springdoc:
   swagger-ui:

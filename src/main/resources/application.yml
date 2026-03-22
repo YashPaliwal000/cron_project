@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/job_scheduler
     username: adeshsengar
-    password: postgres
+    password:
 
   jpa:
     hibernate:
